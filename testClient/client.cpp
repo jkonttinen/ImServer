@@ -46,25 +46,25 @@ int main(int argc, char *argv[])
 	std::cout <<"Couldn't connect to server."<<std::endl;
 	return 1;
     }
-
+*/
     //memset(recvBuff, '0',sizeof(recvBuff));
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         printf("\n Error : Could not create socket \n");
         return 1;
     }
-*/
+
     memset(&serv_addr, '\0', sizeof(serv_addr));
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(5000);
 
- /*   if(inet_pton(AF_INET, argv[1], &serv_addr.sin_addr)<=0)
+    if(inet_pton(AF_INET, argv[1], &serv_addr.sin_addr)<=0)
     {
         printf("\n inet_pton error occured\n");
         return 1;
     }
-*/
+
     if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
         printf("\n Error : Connect Failed \n");
@@ -99,8 +99,11 @@ int main(int argc, char *argv[])
         if (res < 1) std::cout << "Error while trying to send" <<std::endl;
         res = send(sockfd,sendStr.c_str(),sendStr.size(),0);
         if (res < 1) std::cout << "Error while trying to send" <<std::endl;
+
+        delete [] buffer;
     }
-    freeaddrinfo(serv);
+    //freeaddrinfo(serv);
+    delete [] buffer;
     close(sockfd);
     return 0;
 }

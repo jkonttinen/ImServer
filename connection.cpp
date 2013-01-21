@@ -60,6 +60,14 @@ void connection::receive()
     //printf("%s disconnected.\n", name.c_str());
 }
 
+void send(message msg)const{
+    int rv;
+    std::string ostr = msg.out();
+    rv = send(sockfd, ostr.c_str, ostr.size(), 0);
+    if (rv < 1) std::cout << "Error while trying to send" <<std::endl;
+
+}
+
 void connection::start()
 {
     int res,rc1;

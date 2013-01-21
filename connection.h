@@ -1,6 +1,7 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
+#include "messages.h"
 #include <string>
 
 class connection
@@ -20,10 +21,13 @@ public:
     int get_state() const;
     std::string get_name() const;
 
+    void send(message msg);
 private:
+    connection(&connection);
+    connection operator= (&connection); 
+
     void start();
     void receive();
-    void send();
 
     int connfd;
     std::string name;

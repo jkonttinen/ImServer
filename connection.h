@@ -1,14 +1,14 @@
-#ifndef CONNECTION_H
-#define CONNECTION_H
+#ifndef CONNETION_H
+#define CONNETION_H
 
 #include "messages.h"
 #include <string>
 
-class connection
+class Connection
 {
 public:
-    connection(int);
-    ~connection();
+    Connection(int);
+    ~Connection();
 
     enum state
     {
@@ -21,11 +21,8 @@ public:
     int get_state() const;
     std::string get_name() const;
 
-    void send(message msg);
+    void sending(Message msg) const;
 private:
-    connection(&connection);
-    connection operator= (&connection); 
-
     void start();
     void receive();
 
@@ -34,6 +31,8 @@ private:
     state State;
     pthread_t recv_thread, send_thread;
 
+    Connection(const Connection&);
+    Connection operator= (const Connection&);
 };
 
-#endif // CONNECTION_H
+#endif // CONNETION_H

@@ -7,13 +7,13 @@
 #include <arpa/inet.h>
 #include <iostream>
 
-connection::connection(int connfd):connfd(connfd),name(""),State(NORMAL),
+Connection::Connection(int connfd):connfd(connfd),name(""),State(NORMAL),
     recv_thread(0),send_thread(0)
 {
     start();
 }
 
-connection::~connection()
+Connection::~Connection()
 {
     if (recv_thread){
         pthread_cancel(recv_thread);
@@ -27,7 +27,7 @@ connection::~connection()
     close(connfd);
 }
 
-void connection::receive()
+void Connection::receive()
 {
     int res,num;
     char size[32] = "", *buf = NULL;
@@ -60,15 +60,15 @@ void connection::receive()
     //printf("%s disconnected.\n", name.c_str());
 }
 
-void send(message msg)const{
+void Connection::sending(Message msg)const{
     int rv;
     std::string ostr = msg.out();
-    rv = send(sockfd, ostr.c_str, ostr.size(), 0);
+    rv = send(connfd, ostr.c_str(), ostr.size(), 0);
     if (rv < 1) std::cout << "Error while trying to send" <<std::endl;
 
 }
 
-void connection::start()
+void Connection::start()
 {
     int res,rc1;
     char num[4], *buf;
@@ -93,18 +93,18 @@ void connection::start()
     //printf("%s connected.\n",name.c_str());
     delete [] buf;
 
-    if ((rc1=pthread_create( &recv_thread, NULL, start_thread<connection,
-                            &connection::receive>, this)))
+    if ((rc1=pthread_create( &recv_thread, NULL, start_thread<Connection,
+                            &Connection::receive>, this)))
         std::cout<<"Thread creation failed: "<<rc1<<std::endl;
         //printf("Thread creation failed: %d\n", rc1);
 }
 
-int connection::get_state() const
+int Connection::get_state() const
 {
     return State;
 }
 
-std::string connection::get_name() const
+std::string Connection::get_name() const
 {
     return name;
 }

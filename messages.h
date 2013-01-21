@@ -3,10 +3,10 @@
 
 #include <string>
 
-class message
+class Message
 {
 public:
-    message();
+    Message();
 
     void in(char*);
     std::string out()const;

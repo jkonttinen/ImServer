@@ -18,13 +18,13 @@
 
 int main(void)
 {
-    server s;
+    Server s;
     s.run();
 
     return 0;
 }
 
-server::server():listenfd(0),connfd(0),done(false),poll_thread(0),cmd_thread(0),
+Server::Server():listenfd(0),connfd(0),done(false),poll_thread(0),cmd_thread(0),
    client_mutex(PTHREAD_MUTEX_INITIALIZER),done_mutex(PTHREAD_MUTEX_INITIALIZER)
 {
     if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -51,7 +51,7 @@ server::server():listenfd(0),connfd(0),done(false),poll_thread(0),cmd_thread(0),
     }
 }
 
-server::~server(){
+Server::~Server(){
     pthread_mutex_lock(&client_mutex);
     for(auto it = clients.begin(); it != clients.end();){
         delete (*it);
@@ -70,19 +70,19 @@ server::~server(){
     }
 }
 
-void server::poll_clients()
+void Server::poll_clients()
 {
     while(!done)
     {
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
         pthread_mutex_lock( &client_mutex );
-        clients.push_back(new connection(connfd));
+        clients.push_back(new Connection(connfd));
         pthread_mutex_unlock( &client_mutex );
         usleep(5);
     }
 }
 
-void server::read_commands()
+void Server::read_commands()
 {
     std::string command;
     while(!done)
@@ -95,14 +95,14 @@ void server::read_commands()
     }
 }
 
-void server::run()
+void Server::run()
 {
     int res;
 
-    if ((res = pthread_create(&poll_thread,NULL,start_thread<server,&server::poll_clients>,this)))
+    if ((res = pthread_create(&poll_thread,NULL,start_thread<Server,&Server::poll_clients>,this)))
         std::cout <<"Thread creation failed: "<<res<<std::endl;
         //printf("Thread creation failed: %d\n", res);
-    if ((res = pthread_create(&cmd_thread,NULL,start_thread<server,&server::read_commands>,this)))
+    if ((res = pthread_create(&cmd_thread,NULL,start_thread<Server,&Server::read_commands>,this)))
         std::cout <<"Thread creation failed: "<<res<<std::endl;
         //printf("Thread creation failed: %d\n", res);
     while(!done)
@@ -110,7 +110,7 @@ void server::run()
         pthread_mutex_lock(&client_mutex);
         for(auto it = clients.begin(); it != clients.end();)
         {
-            if ((*it)->get_state() == connection::DISCONNECTED)
+            if ((*it)->get_state() == Connection::DISCONNECTED)
             {
                 delete(*it);
                 it = clients.erase(it);

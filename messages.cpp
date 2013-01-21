@@ -1,19 +1,19 @@
  #include "messages.h"
  #include <iostream>
 
-message::message():content("")
+Message::Message():content("")
 {
 }
 
-void in(char* msg){
+void Message::in(char* msg){
     content = msg;
 }
 
-std::string out()const{
+std::string Message::out()const{
     return get_content();
 }
 
-std::string get_content()const{
+std::string Message::get_content()const{
     return content;
 }
 

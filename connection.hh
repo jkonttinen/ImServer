@@ -1,13 +1,15 @@
 #ifndef CONNETION_H
 #define CONNETION_H
 
-#include "messages.h"
-#include <string>
+#include "messages.hh"
+#include "server.hh"
+
+class Server;
 
 class Connection
 {
 public:
-    Connection(int);
+    Connection(int,Server&);
     ~Connection();
 
     enum state
@@ -21,12 +23,14 @@ public:
     int get_state() const;
     std::string get_name() const;
 
-    void sending(Message msg) const;
+    void sending(const Message& msg) const;
 private:
     void start();
     void receive();
 
     int connfd;
+    Server& server;
+
     std::string name;
     state State;
     pthread_t recv_thread, send_thread;

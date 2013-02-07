@@ -1,25 +1,29 @@
-#include "connection.h"
-#include "thread_starter.h"
-#include "messages.h"
+#include "connection.hh"
+#include "thread_starter.hh"
+#include "messages.hh"
+#include "server.hh"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <iostream>
+#include <sstream>
 
-Connection::Connection(int connfd):connfd(connfd),name(""),State(NORMAL),
-    recv_thread(0),send_thread(0)
+Connection::Connection(int connfd, Server& server):connfd(connfd),server(server),
+    name(""),State(NORMAL),recv_thread(0),send_thread(0)
 {
     start();
 }
 
 Connection::~Connection()
 {
-    if (recv_thread){
+    if (recv_thread)
+    {
         pthread_cancel(recv_thread);
         pthread_join(recv_thread,NULL);
     }
-    if (send_thread){
+    if (send_thread)
+    {
         pthread_cancel(send_thread);
         pthread_join(send_thread,NULL);
     }
@@ -31,6 +35,7 @@ void Connection::receive()
 {
     int res,num;
     char size[32] = "", *buf = NULL;
+    Message *msg;
 
     while(1)
     {
@@ -51,21 +56,28 @@ void Connection::receive()
             delete [] buf;
             break;
         }
-        std::cout <<name<<": "<<buf<<std::endl;
-        //printf("%s: %s\n",name.c_str(),buf);
+
+        //msg = new Message(std::string(buf));
+        server.handle_msg(Message(std::string(buf)));
+        //delete msg;
         delete [] buf;
         usleep(5);
     }
     std::cout <<name<<" disconnected."<<std::endl;
-    //printf("%s disconnected.\n", name.c_str());
 }
 
-void Connection::sending(Message msg)const{
+void Connection::sending(const Message& msg)const
+{
     int rv;
-    std::string ostr = msg.out();
-    rv = send(connfd, ostr.c_str(), ostr.size(), 0);
-    if (rv < 1) std::cout << "Error while trying to send" <<std::endl;
+    std::stringstream ostr;
+    char help[32] = "";
+    ostr << msg.get_content(true);
+    sprintf(help,"%lu", ostr.str().size());
 
+    rv = send(connfd, help, 32,0);
+    if (rv < 1) std::cout << "Error while trying to send" <<std::endl;
+    rv = send(connfd, ostr.str().c_str(), ostr.str().size(), 0);
+    if (rv < 1) std::cout << "Error while trying to send" <<std::endl;
 }
 
 void Connection::start()
@@ -94,9 +106,9 @@ void Connection::start()
     delete [] buf;
 
     if ((rc1=pthread_create( &recv_thread, NULL, start_thread<Connection,
-                            &Connection::receive>, this)))
+                             &Connection::receive>, this)))
         std::cout<<"Thread creation failed: "<<rc1<<std::endl;
-        //printf("Thread creation failed: %d\n", rc1);
+    //printf("Thread creation failed: %d\n", rc1);
 }
 
 int Connection::get_state() const

@@ -1,20 +1,7 @@
-//#include <sys/socket.h>
-//#include <sys/types.h>
-#include <netinet/in.h>
-//#include <arpa/inet.h>
-//#include <cstdio>
-//#include <cstdlib>
-#include <cstring>
-
-#include <iostream>
-#include <string>
-#include <list>
-#include <queue>
+#include "server.hh"
+#include "thread_starter.hh"
 
 #include <pthread.h>
-
-#include "server.h"
-#include "thread_starter.h"
 
 int main(void)
 {
@@ -25,7 +12,7 @@ int main(void)
 }
 
 Server::Server():listenfd(0),connfd(0),done(false),poll_thread(0),cmd_thread(0),
-   client_mutex(PTHREAD_MUTEX_INITIALIZER),done_mutex(PTHREAD_MUTEX_INITIALIZER)
+    client_mutex(PTHREAD_MUTEX_INITIALIZER),done_mutex(PTHREAD_MUTEX_INITIALIZER)
 {
     if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -51,23 +38,31 @@ Server::Server():listenfd(0),connfd(0),done(false),poll_thread(0),cmd_thread(0),
     }
 }
 
-Server::~Server(){
+Server::~Server()
+{
     pthread_mutex_lock(&client_mutex);
-    for(auto it = clients.begin(); it != clients.end();){
+    Message msg("5");
+
+    for(auto it = clients.begin(); it != clients.end();)
+    {
+        (*it)->sending(msg);
         delete (*it);
         it = clients.erase(it);
     }
 
     pthread_mutex_unlock(&client_mutex);
 
-    if (poll_thread){
+    if (poll_thread)
+    {
         pthread_cancel(poll_thread);
         pthread_join(poll_thread,NULL);
     }
-    if (cmd_thread){
+    if (cmd_thread)
+    {
         pthread_cancel(cmd_thread);
         pthread_join(cmd_thread,NULL);
     }
+    close(listenfd);
 }
 
 void Server::poll_clients()
@@ -76,7 +71,8 @@ void Server::poll_clients()
     {
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
         pthread_mutex_lock( &client_mutex );
-        clients.push_back(new Connection(connfd));
+        clients.push_back(new Connection(connfd, *this));
+        clients.back()->sending(Message("Terve!"));
         pthread_mutex_unlock( &client_mutex );
         usleep(5);
     }
@@ -95,29 +91,49 @@ void Server::read_commands()
     }
 }
 
+void Server::check_connections()
+{
+    pthread_mutex_lock(&client_mutex);
+    for(auto it = clients.begin(); it != clients.end();)
+    {
+        if ((*it)->get_state() == Connection::DISCONNECTED)
+        {
+            delete(*it);
+            it = clients.erase(it);
+        }
+        else it++;
+    }
+    pthread_mutex_unlock(&client_mutex);
+}
+
+void Server::handle_msg(const Message &msg)
+{
+    switch (msg.get_type())
+    {
+    case Message::MESSAGE:
+        std::cout << msg << std::endl;
+        //std::cout <<msg->get_content(true)<<std::endl;
+        break;
+    default:
+        break;
+    }
+}
+
 void Server::run()
 {
     int res;
 
     if ((res = pthread_create(&poll_thread,NULL,start_thread<Server,&Server::poll_clients>,this)))
         std::cout <<"Thread creation failed: "<<res<<std::endl;
-        //printf("Thread creation failed: %d\n", res);
+    //printf("Thread creation failed: %d\n", res);
     if ((res = pthread_create(&cmd_thread,NULL,start_thread<Server,&Server::read_commands>,this)))
         std::cout <<"Thread creation failed: "<<res<<std::endl;
-        //printf("Thread creation failed: %d\n", res);
+    //printf("Thread creation failed: %d\n", res);
+
     while(!done)
     {
-        pthread_mutex_lock(&client_mutex);
-        for(auto it = clients.begin(); it != clients.end();)
-        {
-            if ((*it)->get_state() == Connection::DISCONNECTED)
-            {
-                delete(*it);
-                it = clients.erase(it);
-            }
-            else it++;
-        }
-        pthread_mutex_unlock(&client_mutex);
+        check_connections();
+        //check_messages();
         usleep(5);
     }
 }

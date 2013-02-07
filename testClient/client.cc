@@ -1,3 +1,5 @@
+#include "address.hh"
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -12,42 +14,42 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <pthread.h>
 
-int main(int argc, char *argv[])
+void* receive_thread(void* ptr){
+    int rv = 0;
+    int connfd = *((int*) ptr);
+    char *buf, num[32] = "";
+
+    while (1){
+        rv = recv(connfd, num, 32, 0);
+        if (rv < 1) {
+            std::cout<<"Reading failed."<<std::endl;
+            break;
+        }
+        buf = new char[atoi(num)+1];
+        rv = recv(connfd, buf, atoi(num), 0);
+        buf[atoi(num)] = '\0';
+        if (rv < 1){
+            std::cout <<"Reading failed."<<std::endl;
+            delete [] buf;
+            break;
+        }
+        std::cout <<buf<<std::endl;
+        delete [] buf;
+    }
+
+    return 0;
+}
+
+int main()
 {
-    int sockfd = 0, len = 256,res;
-    char *buffer;
+    int sockfd = 0, res;
+    char address[100];
     std::string sendStr;
     std::stringstream helpStr;
-    struct addrinfo hints, *serv;
     struct sockaddr_in serv_addr;
 
-    if(argc != 2)
-    {
-        printf("\n Usage: %s <ip of server> \n",argv[0]);
-        return 1;
-    }
-/*
-    memset(&hints,0,sizeof(hints));
-    hints.ai_family = AF_UNSPEC; // use AF_INET6 to force IPv6
-    hints.ai_socktype = SOCK_STREAM;
-
-    if ((res = getaddrinfo("mip4.kyla.fi","12345",&hints,&serv)) != 0){
-        std::cout<<"Error "<<res<<std::endl;
-	return 1;
-    }
-
-    if ((sockfd = socket(serv->ai_family, serv->ai_socktype, serv->ai_protocol)) == -1) {
-	std::cout <<"Socket error "<<sockfd<<std::endl;
-	return 1;
-    }
-
-    if (connect(sockfd, serv->ai_addr, serv->ai_addrlen)==-1){
-	std::cout <<"Couldn't connect to server."<<std::endl;
-	return 1;
-    }
-*/
-    //memset(recvBuff, '0',sizeof(recvBuff));
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         printf("\n Error : Could not create socket \n");
@@ -59,7 +61,12 @@ int main(int argc, char *argv[])
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(12345);
 
-    if(inet_pton(AF_INET, argv[1], &serv_addr.sin_addr)<=0)
+    if (host_lookup("mip4.kyla.fi",address) != 0){
+        printf("Host not found\n");
+        return 1;
+    }
+
+    if(inet_pton(AF_INET, address, &serv_addr.sin_addr)<=0)
     {
         printf("\n inet_pton error occured\n");
         return 1;
@@ -71,8 +78,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-
-
     std::cout <<"Anna nimimerkki: ";
     std::cin >> sendStr;
     helpStr << sendStr.size();
@@ -81,14 +86,20 @@ int main(int argc, char *argv[])
     res = send(sockfd,sendStr.c_str(),sendStr.size(),0);
     if (res < 1) std::cout << "Error while trying to send" <<std::endl;
     std::cin.ignore();
+
+    int rv;
+    pthread_t recv_thread = 0;
+    if ((rv = pthread_create(&recv_thread, NULL, receive_thread, &sockfd)))
+        std::cout <<"Thread creation failed: "<<rv<<std::endl;
+
     while(1)
     {
         helpStr.clear();
         helpStr.str(std::string());
 
-        buffer = new char[len];
-        std::cin.getline(buffer,len);
-        sendStr = buffer;
+        //buffer = new char[len];
+        std::getline(std::cin,sendStr);
+        //sendStr = buffer;
         if (!sendStr.compare("exit")) break;
 
         helpStr << sendStr.size();
@@ -99,11 +110,11 @@ int main(int argc, char *argv[])
         if (res < 1) std::cout << "Error while trying to send" <<std::endl;
         res = send(sockfd,sendStr.c_str(),sendStr.size(),0);
         if (res < 1) std::cout << "Error while trying to send" <<std::endl;
-
-        delete [] buffer;
     }
-    //freeaddrinfo(serv);
-    delete [] buffer;
+
+    pthread_cancel(recv_thread);
+    pthread_join(recv_thread,NULL);
+
     close(sockfd);
     return 0;
 }

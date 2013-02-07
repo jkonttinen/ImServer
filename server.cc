@@ -106,13 +106,25 @@ void Server::check_connections()
     pthread_mutex_unlock(&client_mutex);
 }
 
-void Server::handle_msg(const Message &msg)
+void Server::handle_msg(const Message &msg, const Connection &client)
 {
+    std::string help("");
     switch (msg.get_type())
     {
     case Message::MESSAGE:
-        std::cout << msg << std::endl;
+        std::cout << client.get_name()<<": "<<msg << std::endl;
         //std::cout <<msg->get_content(true)<<std::endl;
+        break;
+    case Message::LIST_INFO:
+        pthread_mutex_lock(&client_mutex);
+        for (auto it = clients.begin();it != clients.end();it++){
+            if (client.get_name() != (*it)->get_name())
+                help += (*it)->get_name() +" ";
+        }
+        pthread_mutex_unlock(&client_mutex);
+
+        if (help.size() > 0) help.erase(help.end()-1);
+        client.sending(Message(help, msg.get_type()));
         break;
     default:
         break;

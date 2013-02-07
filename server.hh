@@ -18,7 +18,7 @@ public:
     ~Server();
 
     void run();
-    void handle_msg(const Message&);
+    void handle_msg(const Message&, const Connection&);
 
 private:
     void poll_clients();

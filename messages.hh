@@ -7,10 +7,6 @@
 class Message
 {
 public:
-    Message(std::string);
-
-    std::string get_content(bool)const;
-
     enum MsgType
     {
         NONE,
@@ -20,7 +16,10 @@ public:
         SEND_FILE,
         SERVER_GOING_DOWN
     };
+    Message(const std::string&);
+    Message(const std::string&, const MsgType&);
 
+    std::string get_content(bool)const;
     MsgType get_type()const;
 private:
     MsgType type;

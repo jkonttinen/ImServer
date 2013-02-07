@@ -35,7 +35,7 @@ void Connection::receive()
 {
     int res,num;
     char size[32] = "", *buf = NULL;
-    Message *msg;
+//    Message *msg;
 
     while(1)
     {
@@ -58,7 +58,7 @@ void Connection::receive()
         }
 
         //msg = new Message(std::string(buf));
-        server.handle_msg(Message(std::string(buf)));
+        server.handle_msg(Message(std::string(buf)), *this);
         //delete msg;
         delete [] buf;
         usleep(5);

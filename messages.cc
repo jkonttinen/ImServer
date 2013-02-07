@@ -1,12 +1,18 @@
 #include "messages.hh"
 
-Message::Message(std::string msg):content(msg)
+Message::Message(const std::string& msg):content(msg)
 {
     size_t num;
     content >> num;
     content.ignore();
     std::getline(content, message);
     type = (Message::MsgType)num;
+}
+
+Message::Message(const std::string& msg, const Message::MsgType& type):
+    type(type),message(msg)
+{
+    content << type <<" "<< msg;
 }
 
 std::string Message::get_content(bool all)const

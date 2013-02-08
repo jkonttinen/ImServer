@@ -11,21 +11,23 @@ public:
     {
         NONE,
         MESSAGE,
-        LIST_INFO,
         INVITE,
         SEND_FILE,
+        LIST_INFO,
         SERVER_GOING_DOWN
     };
     Message(const std::string&);
-    Message(const std::string&, const MsgType&);
+    Message(const std::string&, const MsgType&, const std::string&);
 
     std::string get_content(bool)const;
     MsgType get_type()const;
+    std::string get_destination()const;
 private:
     MsgType type;
 
     std::stringstream content;
     std::string message;
+    std::string destination;
 };
 
 std::ostream& operator<<(std::ostream &, const Message&);

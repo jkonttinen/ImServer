@@ -4,15 +4,19 @@ Message::Message(const std::string& msg):content(msg)
 {
     size_t num;
     content >> num;
+    type = (Message::MsgType)num;
+    if (type != NONE && type < LIST_INFO)
+        content >> destination;
     content.ignore();
     std::getline(content, message);
-    type = (Message::MsgType)num;
 }
 
-Message::Message(const std::string& msg, const Message::MsgType& type):
-    type(type),message(msg)
+Message::Message(const std::string& msg, const Message::MsgType& type,
+            const std::string& dest): type(type),message(msg),destination(dest)
 {
-    content << type <<" "<< msg;
+    if (destination != "")
+        content << type <<" "<< destination <<" "<< msg;
+    else content << type <<" "<< msg;
 }
 
 std::string Message::get_content(bool all)const
@@ -24,6 +28,11 @@ std::string Message::get_content(bool all)const
 Message::MsgType Message::get_type()const
 {
     return type;
+}
+
+std::string Message::get_destination()const
+{
+    return destination;
 }
 
 std::ostream& operator<< (std::ostream& out, const Message& msg)

@@ -87,6 +87,17 @@ void Server::read_commands()
         pthread_mutex_lock(&done_mutex);
         if (!command.compare("exit")) done = true;
         pthread_mutex_unlock(&done_mutex);
+
+        pthread_mutex_lock(&client_mutex);
+        size_t i = 0;
+        if (!command.compare("list")){
+            for (auto it = clients.begin();it != clients.end();it++){
+                std::cout << (*it)->get_name() << std::endl;
+                i++;
+            }
+            std::cout << i <<" clients total."<<std::endl;
+        }
+        pthread_mutex_unlock(&client_mutex);
         usleep(5);
     }
 }
@@ -108,27 +119,38 @@ void Server::check_connections()
 
 void Server::handle_msg(const Message &msg, const Connection &client)
 {
-    std::string help("");
+    pthread_mutex_lock(&client_mutex);
     switch (msg.get_type())
     {
-    case Message::MESSAGE:
-        std::cout << client.get_name()<<": "<<msg << std::endl;
-        //std::cout <<msg->get_content(true)<<std::endl;
+      case Message::MESSAGE:
+      {
+        for (auto it = clients.begin(); it != clients.end(); it++)
+        {
+            if ((*it)->get_name() == msg.get_destination())
+            {
+                (*it)->sending(Message(msg.get_content(false),msg.get_type(),client.get_name()));
+                break;
+            }
+        }
         break;
-    case Message::LIST_INFO:
-        pthread_mutex_lock(&client_mutex);
-        for (auto it = clients.begin();it != clients.end();it++){
+      }
+      case Message::LIST_INFO:
+      {
+        std::string help("");
+        for (auto it = clients.begin(); it != clients.end(); it++)
+        {
             if (client.get_name() != (*it)->get_name())
                 help += (*it)->get_name() +" ";
         }
-        pthread_mutex_unlock(&client_mutex);
 
         if (help.size() > 0) help.erase(help.end()-1);
-        client.sending(Message(help, msg.get_type()));
+        client.sending(Message(help, msg.get_type(),""));
         break;
-    default:
+      }
+      default:
         break;
     }
+    pthread_mutex_unlock(&client_mutex);
 }
 
 void Server::run()

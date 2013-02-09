@@ -66,7 +66,7 @@ void Connection::receive()
     std::cout <<name<<" disconnected."<<std::endl;
 }
 
-void Connection::sending(const Message& msg)const
+void Connection::send_to(const Message& msg)const
 {
     int rv;
     std::stringstream ostr;

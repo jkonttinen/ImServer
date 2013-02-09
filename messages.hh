@@ -11,6 +11,7 @@ public:
     {
         NONE,
         MESSAGE,
+        CHAT_MESSAGE,
         INVITE,
         SEND_FILE,
         LIST_INFO,
@@ -21,13 +22,13 @@ public:
 
     std::string get_content(bool)const;
     MsgType get_type()const;
-    std::string get_destination()const;
+    std::string get_info()const;
 private:
     MsgType type;
 
     std::stringstream content;
     std::string message;
-    std::string destination;
+    std::string info;
 };
 
 std::ostream& operator<<(std::ostream &, const Message&);

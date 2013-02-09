@@ -2,6 +2,7 @@
 #include "thread_starter.hh"
 
 #include <pthread.h>
+#include <cstring>
 
 int main(void)
 {
@@ -12,7 +13,8 @@ int main(void)
 }
 
 Server::Server():listenfd(0),connfd(0),done(false),poll_thread(0),cmd_thread(0),
-    client_mutex(PTHREAD_MUTEX_INITIALIZER),done_mutex(PTHREAD_MUTEX_INITIALIZER)
+    client_mutex(PTHREAD_MUTEX_INITIALIZER),done_mutex(PTHREAD_MUTEX_INITIALIZER),
+    chat_mutex(PTHREAD_MUTEX_INITIALIZER)
 {
     if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -40,16 +42,21 @@ Server::Server():listenfd(0),connfd(0),done(false),poll_thread(0),cmd_thread(0),
 
 Server::~Server()
 {
+    pthread_mutex_lock(&chat_mutex);
+    for (auto it = chats.begin(); it != chats.end(); it++)
+        delete((*it).second);
+    pthread_mutex_unlock(&chat_mutex);
+
     pthread_mutex_lock(&client_mutex);
-    Message msg("5");
+    std::stringstream ss;
+    ss << Message::SERVER_GOING_DOWN;
+    Message msg(ss.str());
 
-    for(auto it = clients.begin(); it != clients.end();)
+    for(auto it = clients.begin(); it != clients.end(); it++)
     {
-        (*it)->sending(msg);
+        (*it)->send_to(msg);
         delete (*it);
-        it = clients.erase(it);
     }
-
     pthread_mutex_unlock(&client_mutex);
 
     if (poll_thread)
@@ -72,7 +79,7 @@ void Server::poll_clients()
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
         pthread_mutex_lock( &client_mutex );
         clients.push_back(new Connection(connfd, *this));
-        clients.back()->sending(Message("Terve!"));
+        clients.back()->send_to(Message("Terve!"));
         pthread_mutex_unlock( &client_mutex );
         usleep(5);
     }
@@ -90,8 +97,10 @@ void Server::read_commands()
 
         pthread_mutex_lock(&client_mutex);
         size_t i = 0;
-        if (!command.compare("list")){
-            for (auto it = clients.begin();it != clients.end();it++){
+        if (!command.compare("list"))
+        {
+            for (auto it = clients.begin(); it != clients.end(); it++)
+            {
                 std::cout << (*it)->get_name() << std::endl;
                 i++;
             }
@@ -117,25 +126,78 @@ void Server::check_connections()
     pthread_mutex_unlock(&client_mutex);
 }
 
+Connection* Server::get_client(const std::string& name)
+{
+    for (auto it = clients.begin();it != clients.end(); it++)
+        if ((*it)->get_name() == name) return (*it);
+    return NULL;
+}
+
 void Server::handle_msg(const Message &msg, const Connection &client)
 {
     pthread_mutex_lock(&client_mutex);
     switch (msg.get_type())
     {
-      case Message::MESSAGE:
-      {
+    case Message::MESSAGE:
+    {
         for (auto it = clients.begin(); it != clients.end(); it++)
         {
-            if ((*it)->get_name() == msg.get_destination())
+            if ((*it)->get_name() == msg.get_info())
             {
-                (*it)->sending(Message(msg.get_content(false),msg.get_type(),client.get_name()));
+                (*it)->send_to(Message(msg.get_content(false),msg.get_type(),client.get_name()));
                 break;
             }
         }
         break;
-      }
-      case Message::LIST_INFO:
-      {
+    }
+
+    pthread_mutex_lock(&chat_mutex);
+    case Message::CHAT_MESSAGE:
+    {
+        if (chats.find(msg.get_info()) == chats.end()) break;
+        chats[msg.get_info()]->send_all(msg,client);
+        break;
+    }
+    case Message::INVITE:
+    {
+        std::stringstream chat_name, invite;
+        Connection* cptr = NULL;
+        invite << client.get_name() <<" invited you to a chat.";
+
+        if (msg.get_content(false) == std::string("new"))
+        {
+            chat_name << "Chat" << chats.size();
+            cptr = get_client(client.get_name());
+            if (cptr == NULL) break;
+            chats[chat_name.str()] = new Chat(cptr, chat_name.str());
+
+            cptr = get_client(msg.get_info());
+            if (cptr == NULL) break;
+            chats[chat_name.str()]->add_client(cptr);
+
+            cptr->send_to(Message(invite.str(), Message::INVITE, chat_name.str()));
+            client.send_to(Message("You initiated a chat.", Message::INVITE, chat_name.str()));
+        }
+        else
+        {
+            chat_name << msg.get_content(false);
+            if (chats.find(chat_name.str()) == chats.end()) break;
+
+            cptr = get_client(msg.get_info());
+            if (cptr == NULL) break;
+            chats[chat_name.str()]->add_client(cptr);
+            cptr->send_to(Message(invite.str(), Message::INVITE, chat_name.str()));
+
+            invite.str(std::string());
+            invite << "Invited " << msg.get_info() <<" to the chat.";
+            client.send_to(Message(invite.str(),Message::INVITE, chat_name.str()));
+        }
+    }
+    break;
+    pthread_mutex_unlock(&chat_mutex);
+
+    case Message::LIST_INFO:
+    {
         std::string help("");
         for (auto it = clients.begin(); it != clients.end(); it++)
         {
@@ -144,11 +206,10 @@ void Server::handle_msg(const Message &msg, const Connection &client)
         }
 
         if (help.size() > 0) help.erase(help.end()-1);
-        client.sending(Message(help, msg.get_type(),""));
+        client.send_to(Message(help, msg.get_type(),""));
         break;
-      }
-      default:
-        break;
+    }
+    default: break;
     }
     pthread_mutex_unlock(&client_mutex);
 }
@@ -171,3 +232,4 @@ void Server::run()
         usleep(5);
     }
 }
+

@@ -23,7 +23,7 @@ public:
     int get_state() const;
     std::string get_name() const;
 
-    void sending(const Message& msg) const;
+    void send_to(const Message& msg) const;
 private:
     void start();
     void receive();

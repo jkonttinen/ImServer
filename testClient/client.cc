@@ -103,8 +103,8 @@ int main()
         if (!sendStr.compare("exit")) break;
 
         helpStr << sendStr.size();
-        std::cout << sendStr.size()<< " ";
-        std::cout << helpStr.str() << std::endl;
+//        std::cout << sendStr.size()<< " ";
+//        std::cout << helpStr.str() << std::endl;
 
         res = send(sockfd,helpStr.str().c_str(),32,0);
         if (res < 1) std::cout << "Error while trying to send" <<std::endl;

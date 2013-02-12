@@ -17,7 +17,7 @@ Chat::~Chat()
 void Chat::send_all(const Message& msg, const Connection& sender) const
 {
     std::stringstream ss;
-    ss << sender.get_name() <<": "<<msg.get_content(false);
+    ss << sender.get_name() <<" "<<msg.get_content(false);
 
     for (auto it = clients.begin(); it != clients.end(); it++)
         if (sender.get_name() != (*it)->get_name())
@@ -34,6 +34,7 @@ void Chat::remove_client(const std::string& name)
     for (auto it = clients.begin();it != clients.end();it++)
         if ((*it)->get_name() == name)
         {
+            send_all(Message("quit the chat.",Message::PART_CHAT),**it);
             clients.erase(it);
             break;
         }
@@ -42,6 +43,16 @@ void Chat::remove_client(const std::string& name)
 std::string Chat::get_name()const
 {
     return name;
+}
+
+std::string Chat::get_namelist()const
+{
+    std::string str("");
+    for (auto it = clients.begin();it != clients.end();it++)
+        str += (*it)->get_name() + " ";
+
+    if (str.size() > 0) str.erase(str.end()-1);
+    return str;
 }
 
 bool Chat::has_client(const std::string& name)const

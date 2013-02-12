@@ -24,6 +24,7 @@ public:
     bool has_client(const std::string&)const;
 
     std::string get_name()const;
+    std::string get_namelist()const;
 private:
     Chat(const Chat&);
     Chat operator= (const Chat&);

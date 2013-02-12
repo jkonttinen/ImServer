@@ -20,7 +20,7 @@ public:
         EXIT
     };
     Message(const std::string&);
-    Message(const std::string&, const MsgType&, const std::string&);
+    Message(const std::string&, const MsgType&, const std::string& info = "");
 
     std::string get_content(bool)const;
     MsgType get_type()const;

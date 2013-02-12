@@ -166,6 +166,8 @@ void Server::handle_msg(const Message &msg, const Connection &client)
     }
     case Message::INVITE:
     {
+        if (msg.get_info() == client.get_name()) break;
+
         std::stringstream chat_name, invite;
         Connection* cptr = NULL;
         invite << client.get_name() <<" invited you to a chat.";
@@ -206,13 +208,20 @@ void Server::handle_msg(const Message &msg, const Connection &client)
         chat_name << msg.get_content(false);
         if (chats.find(chat_name.str()) == chats.end()) break;
 
-        chats[chat_name.str()]->send_all(Message("quit the chat.",msg.get_type(),""),client);
+        //chats[chat_name.str()]->send_all(Message("quit the chat.",msg.get_type(),""),client);
         chats[chat_name.str()]->remove_client(client.get_name());
 
         client.send_to(Message("You quit the chat.",msg.get_type(),""));
         break;
     }
-
+    case Message::LIST_CHAT:
+    {
+        std::string help("");
+        if (chats.find(msg.get_content(false)) == chats.end()) break;
+        help = chats[msg.get_content(false)]->get_namelist();
+        client.send_to(Message(help, msg.get_type()));
+        break;
+    }
     case Message::LIST_ALL:
     {
         std::string help("");

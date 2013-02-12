@@ -49,7 +49,7 @@ Server::~Server()
 
     pthread_mutex_lock(&client_mutex);
     std::stringstream ss;
-    ss << Message::SERVER_GOING_DOWN;
+    ss << Message::EXIT;
     Message msg(ss.str());
 
     for(auto it = clients.begin(); it != clients.end(); it++)
@@ -114,15 +114,20 @@ void Server::read_commands()
 void Server::check_connections()
 {
     pthread_mutex_lock(&client_mutex);
+    pthread_mutex_lock(&chat_mutex);
     for(auto it = clients.begin(); it != clients.end();)
     {
         if ((*it)->get_state() == Connection::DISCONNECTED)
         {
+            for (auto it1 = chats.begin();it1 != chats.end();it1++)
+                (*it1).second->remove_client((*it)->get_name());
+
             delete(*it);
             it = clients.erase(it);
         }
         else it++;
     }
+    pthread_mutex_unlock(&chat_mutex);
     pthread_mutex_unlock(&client_mutex);
 }
 
@@ -136,6 +141,7 @@ Connection* Server::get_client(const std::string& name)
 void Server::handle_msg(const Message &msg, const Connection &client)
 {
     pthread_mutex_lock(&client_mutex);
+    pthread_mutex_lock(&chat_mutex);
     switch (msg.get_type())
     {
     case Message::MESSAGE:
@@ -151,10 +157,10 @@ void Server::handle_msg(const Message &msg, const Connection &client)
         break;
     }
 
-    pthread_mutex_lock(&chat_mutex);
     case Message::CHAT_MESSAGE:
     {
         if (chats.find(msg.get_info()) == chats.end()) break;
+        if (!chats[msg.get_info()]->has_client(client.get_name())) break;
         chats[msg.get_info()]->send_all(msg,client);
         break;
     }
@@ -192,11 +198,22 @@ void Server::handle_msg(const Message &msg, const Connection &client)
             invite << "Invited " << msg.get_info() <<" to the chat.";
             client.send_to(Message(invite.str(),Message::INVITE, chat_name.str()));
         }
+        break;
     }
-    break;
-    pthread_mutex_unlock(&chat_mutex);
+    case Message::PART_CHAT:
+    {
+        std::stringstream chat_name,ss;
+        chat_name << msg.get_content(false);
+        if (chats.find(chat_name.str()) == chats.end()) break;
 
-    case Message::LIST_INFO:
+        chats[chat_name.str()]->send_all(Message("quit the chat.",msg.get_type(),""),client);
+        chats[chat_name.str()]->remove_client(client.get_name());
+
+        client.send_to(Message("You quit the chat.",msg.get_type(),""));
+        break;
+    }
+
+    case Message::LIST_ALL:
     {
         std::string help("");
         for (auto it = clients.begin(); it != clients.end(); it++)
@@ -211,6 +228,7 @@ void Server::handle_msg(const Message &msg, const Connection &client)
     }
     default: break;
     }
+    pthread_mutex_unlock(&chat_mutex);
     pthread_mutex_unlock(&client_mutex);
 }
 

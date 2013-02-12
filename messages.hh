@@ -14,8 +14,10 @@ public:
         CHAT_MESSAGE,
         INVITE,
         SEND_FILE,
-        LIST_INFO,
-        SERVER_GOING_DOWN
+        LIST_ALL,
+        LIST_CHAT,
+        PART_CHAT,
+        EXIT
     };
     Message(const std::string&);
     Message(const std::string&, const MsgType&, const std::string&);

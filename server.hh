@@ -20,7 +20,6 @@ public:
 
     void run();
     void handle_msg(const Message&, const Connection&);
-
 private:
     void poll_clients();
     void read_commands();

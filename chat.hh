@@ -18,7 +18,10 @@ public:
     ~Chat();
 
     void add_client(Connection*);
+    void remove_client(const std::string&);
     void send_all(const Message&, const Connection&)const;
+
+    bool has_client(const std::string&)const;
 
     std::string get_name()const;
 private:

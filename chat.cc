@@ -29,7 +29,24 @@ void Chat::add_client(Connection* client)
     clients.push_back(client);
 }
 
+void Chat::remove_client(const std::string& name)
+{
+    for (auto it = clients.begin();it != clients.end();it++)
+        if ((*it)->get_name() == name)
+        {
+            clients.erase(it);
+            break;
+        }
+}
+
 std::string Chat::get_name()const
 {
     return name;
+}
+
+bool Chat::has_client(const std::string& name)const
+{
+    for (auto it = clients.begin();it != clients.end();it++)
+        if ((*it)->get_name() == name) return true;
+    return false;
 }

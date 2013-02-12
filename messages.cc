@@ -5,7 +5,7 @@ Message::Message(const std::string& msg):content(msg)
     size_t num;
     content >> num;
     type = (Message::MsgType)num;
-    if (type != NONE && type < LIST_INFO)
+    if (type != NONE && type < LIST_ALL)
         content >> info;
     content.ignore();
     std::getline(content, message);

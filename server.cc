@@ -96,9 +96,9 @@ void Server::read_commands()
         pthread_mutex_unlock(&done_mutex);
 
         pthread_mutex_lock(&client_mutex);
-        size_t i = 0;
         if (!command.compare("list"))
         {
+            size_t i = 0;
             for (auto it = clients.begin(); it != clients.end(); it++)
             {
                 std::cout << (*it)->get_name() << std::endl;
@@ -174,7 +174,10 @@ void Server::handle_msg(const Message &msg, const Connection &client)
 
         if (msg.get_content(false) == std::string("new"))
         {
-            chat_name << "Chat" << chats.size();
+            do {
+                chat_name << "Chat" << random();
+            }while(!(chats.find(chat_name.str()) == chats.end()));
+
             cptr = get_client(client.get_name());
             if (cptr == NULL) break;
             chats[chat_name.str()] = new Chat(cptr, chat_name.str());

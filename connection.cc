@@ -100,6 +100,7 @@ void Connection::start()
         delete [] buf;
         return;
     }
+    buf[atoi(num)] = '\0';
     name = buf;
     std::cout<<name<<" connected."<<std::endl;
     //printf("%s connected.\n",name.c_str());

@@ -18,8 +18,6 @@ public:
         DISCONNECTED
     };
 
-    void set_state(state);
-
     int get_state() const;
     std::string get_name() const;
 
@@ -27,6 +25,7 @@ public:
 private:
     void start();
     void receive();
+    void set_state(const state&);
 
     int connfd;
     Server& server;

@@ -106,6 +106,11 @@ void Connection::start()
     //printf("%s connected.\n",name.c_str());
     delete [] buf;
 
+    if (server.has_client(name)) {
+        set_state(DISCONNECTED);
+        return;
+    }
+
     if ((rc1=pthread_create( &recv_thread, NULL, start_thread<Connection,
                              &Connection::receive>, this)))
         std::cout<<"Thread creation failed: "<<rc1<<std::endl;
@@ -115,6 +120,11 @@ void Connection::start()
 int Connection::get_state() const
 {
     return State;
+}
+
+void Connection::set_state(const state& state) 
+{
+    State = state;
 }
 
 std::string Connection::get_name() const

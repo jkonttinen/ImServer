@@ -20,6 +20,7 @@ public:
 
     void run();
     void handle_msg(const Message&, const Connection&);
+    bool has_client(const std::string&) const;
 private:
     void poll_clients();
     void read_commands();

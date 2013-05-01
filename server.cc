@@ -79,7 +79,9 @@ void Server::poll_clients()
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
         pthread_mutex_lock( &client_mutex );
         clients.push_back(new Connection(connfd, *this));
-        clients.back()->send_to(Message("Terve!"));
+        if (clients.back()->get_state() == Connection::DISCONNECTED)
+            clients.back()->send_to(Message("Duplicate name",Message::EXIT));
+        else clients.back()->send_to(Message("Terve!"));
         pthread_mutex_unlock( &client_mutex );
         usleep(5);
     }
@@ -242,6 +244,13 @@ void Server::handle_msg(const Message &msg, const Connection &client)
     }
     pthread_mutex_unlock(&chat_mutex);
     pthread_mutex_unlock(&client_mutex);
+}
+
+bool Server::has_client(const std::string& name) const
+{
+    for (auto it = clients.begin(); it != clients.end(); it++) 
+        if (name == (*it)->get_name()) return true;
+    return false;
 }
 
 void Server::run()

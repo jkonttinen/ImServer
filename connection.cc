@@ -117,7 +117,7 @@ void Connection::start()
     //printf("Thread creation failed: %d\n", rc1);
 }
 
-int Connection::get_state() const
+Connection::state Connection::get_state() const
 {
     return State;
 }

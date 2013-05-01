@@ -81,7 +81,7 @@ void Server::poll_clients()
         clients.push_back(new Connection(connfd, *this));
         if (clients.back()->get_state() == Connection::DISCONNECTED)
             clients.back()->send_to(Message("Duplicate name",Message::EXIT));
-        else clients.back()->send_to(Message("Terve!"));
+        else clients.back()->send_to(Message("Terve!",Message::NONE));
         pthread_mutex_unlock( &client_mutex );
         usleep(5);
     }

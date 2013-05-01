@@ -18,7 +18,7 @@ public:
         DISCONNECTED
     };
 
-    int get_state() const;
+    Connection::state get_state() const;
     std::string get_name() const;
 
     void send_to(const Message& msg) const;

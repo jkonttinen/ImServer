@@ -1,5 +1,5 @@
-#ifndef MESSAGE_H
-#define MESSAGE_H
+#ifndef MESSAGE_HH
+#define MESSAGE_HH
 
 #include <sstream>
 #include <iostream>
@@ -34,5 +34,5 @@ private:
 };
 
 std::ostream& operator<<(std::ostream &, const Message&);
-#endif // message_H
+#endif // message_HH
 

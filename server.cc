@@ -248,7 +248,7 @@ void Server::handle_msg(const Message &msg, const Connection &client)
 
 bool Server::has_client(const std::string& name) const
 {
-    for (auto it = clients.begin(); it != clients.end(); it++) 
+    for (auto it = clients.begin(); it != clients.end(); it++)
         if (name == (*it)->get_name()) return true;
     return false;
 }

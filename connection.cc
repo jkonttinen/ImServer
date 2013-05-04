@@ -122,7 +122,7 @@ Connection::state Connection::get_state() const
     return State;
 }
 
-void Connection::set_state(const state& state) 
+void Connection::set_state(const state& state)
 {
     State = state;
 }

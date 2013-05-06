@@ -57,7 +57,7 @@ Server::~Server()
     for(auto it = clients.begin(); it != clients.end(); it++)
     {
         (*it)->send_to(msg);
-        usleep(50000);
+        usleep(1000000);
         delete (*it);
     }
     pthread_mutex_unlock(&client_mutex);
@@ -124,6 +124,7 @@ void Server::check_connections()
     {
         if ((*it)->get_state() == Connection::DISCONNECTED)
         {
+            usleep(1000000);
             for (auto it1 = chats.begin();it1 != chats.end();it1++)
                 (*it1).second->remove_client((*it)->get_name());
 

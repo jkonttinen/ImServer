@@ -34,5 +34,4 @@ private:
 };
 
 std::ostream& operator<<(std::ostream &, const Message&);
-#endif // message_HH
-
+#endif //MESSAGE_HH 

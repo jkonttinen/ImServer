@@ -4,6 +4,8 @@
 #include <pthread.h>
 #include <cstring>
 
+#define BITS sizeof(size_t)
+
 int main(void)
 {
     Server s;
@@ -12,7 +14,7 @@ int main(void)
     return 0;
 }
 
-Server::Server():listenfd(0),connfd(0),done(false),poll_thread(0),cmd_thread(0),
+Server::Server():listenfd(0),done(false),poll_thread(0),cmd_thread(0),
     client_mutex(PTHREAD_MUTEX_INITIALIZER),done_mutex(PTHREAD_MUTEX_INITIALIZER),
     chat_mutex(PTHREAD_MUTEX_INITIALIZER)
 {
@@ -55,6 +57,7 @@ Server::~Server()
     for(auto it = clients.begin(); it != clients.end(); it++)
     {
         (*it)->send_to(msg);
+        usleep(50000);
         delete (*it);
     }
     pthread_mutex_unlock(&client_mutex);
@@ -76,7 +79,7 @@ void Server::poll_clients()
 {
     while(!done)
     {
-        connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
+        int connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
         pthread_mutex_lock( &client_mutex );
         clients.push_back(new Connection(connfd, *this));
         if (clients.back()->get_state() == Connection::DISCONNECTED)

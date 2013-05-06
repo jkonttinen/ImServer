@@ -1,5 +1,5 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef SERVER_HH
+#define SERVER_HH
 
 #include "connection.hh"
 #include "messages.hh"
@@ -30,7 +30,7 @@ private:
     std::list<Connection*> clients;
     std::map<std::string, Chat*> chats;
 
-    int listenfd, connfd;
+    int listenfd;
     bool done;
     sockaddr_in serv_addr;
 
@@ -41,4 +41,4 @@ private:
     Server operator= (const Server&);
 };
 
-#endif //SERVER_H
+#endif //SERVER_HH

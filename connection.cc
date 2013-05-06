@@ -27,24 +27,19 @@ Connection::~Connection()
         pthread_cancel(send_thread);
         pthread_join(send_thread,NULL);
     }
-
     close(connfd);
 }
 
 void Connection::receive()
 {
-    int res,num;
-    char size[32] = "", *buf = NULL;
-//    Message *msg;
-
     while(1)
     {
+        int res,num;
+        char size[32] = "", *buf = NULL;
+
         res = recv(connfd,size,sizeof(size),0);
-        if (res != sizeof(size))
-        {
-            State = DISCONNECTED;
-            break;
-        }
+        if (res != sizeof(size)) break;
+
         num = atoi(size);
         buf = new char[num+1];
 
@@ -52,18 +47,18 @@ void Connection::receive()
         buf[num] = '\0';
         if (res < 1)
         {
-            State = DISCONNECTED;
             delete [] buf;
             break;
         }
 
-        //msg = new Message(std::string(buf));
         server.handle_msg(Message(std::string(buf)), *this);
-        //delete msg;
+
         delete [] buf;
         usleep(5);
     }
+
     std::cout <<name<<" disconnected."<<std::endl;
+    set_state(DISCONNECTED);
 }
 
 void Connection::send_to(const Message& msg)const
@@ -72,8 +67,11 @@ void Connection::send_to(const Message& msg)const
     std::stringstream ostr;
     char help[32] = "";
     ostr << msg.get_content(true);
+#if BITS>4
     sprintf(help,"%lu", ostr.str().size());
-
+#else
+    sprintf(help,"%u", ostr.str().size());
+#endif
     rv = send(connfd, help, 32,0);
     if (rv < 1) std::cout << "Error while trying to send" <<std::endl;
     rv = send(connfd, ostr.str().c_str(), ostr.str().size(), 0);
@@ -88,7 +86,7 @@ void Connection::start()
     res = recv(connfd,num,sizeof(num),0);
     if (res != sizeof(num))
     {
-        State = DISCONNECTED;
+        set_state(DISCONNECTED);
         return;
     }
 
@@ -96,7 +94,7 @@ void Connection::start()
     res = recv(connfd,buf,atoi(num)+1,0);
     if (res < 1)
     {
-        State = DISCONNECTED;
+        set_state(DISCONNECTED);
         delete [] buf;
         return;
     }

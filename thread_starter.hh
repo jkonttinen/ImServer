@@ -1,5 +1,5 @@
-#ifndef THREAD_STARTER_H
-#define THREAD_STARTER_H
+#ifndef THREAD_STARTER_HH
+#define THREAD_STARTER_HH
 
 template<class T, void(T::*thread)()>
 void* start_thread(void* ptr)
@@ -8,4 +8,4 @@ void* start_thread(void* ptr)
     return 0;
 }
 
-#endif // THREAD_STARTER_H
+#endif // THREAD_STARTER_HH

@@ -1,5 +1,5 @@
-#ifndef CONNETION_H
-#define CONNETION_H
+#ifndef CONNECTION_HH
+#define CONNECTION_HH
 
 #include "messages.hh"
 #include "server.hh"
@@ -38,4 +38,4 @@ private:
     Connection operator= (const Connection&);
 };
 
-#endif // CONNETION_H
+#endif // CONNETION_HH

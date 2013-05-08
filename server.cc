@@ -84,7 +84,12 @@ void Server::poll_clients()
         clients.push_back(new Connection(connfd, *this));
         if (clients.back()->get_state() == Connection::DISCONNECTED)
             clients.back()->send_to(Message("Duplicate name",Message::EXIT));
-        else clients.back()->send_to(Message("Terve!",Message::NONE));
+        else {
+            clients.back()->send_to(Message("Terve!",Message::NONE));
+            pthread_mutex_unlock(&client_mutex);
+            send_lists();
+            pthread_mutex_lock(&client_mutex);
+        }
         pthread_mutex_unlock( &client_mutex );
         usleep(5);
     }
@@ -118,6 +123,7 @@ void Server::read_commands()
 
 void Server::check_connections()
 {
+    bool help = false;
     pthread_mutex_lock(&client_mutex);
     pthread_mutex_lock(&chat_mutex);
     for(auto it = clients.begin(); it != clients.end();)
@@ -129,12 +135,15 @@ void Server::check_connections()
                 (*it1).second->remove_client((*it)->get_name());
 
             delete(*it);
+            *it = NULL;
             it = clients.erase(it);
+            help = true;
         }
         else it++;
     }
     pthread_mutex_unlock(&chat_mutex);
     pthread_mutex_unlock(&client_mutex);
+    if (help) send_lists();
 }
 
 Connection* Server::get_client(const std::string& name)
@@ -142,6 +151,12 @@ Connection* Server::get_client(const std::string& name)
     for (auto it = clients.begin();it != clients.end(); it++)
         if ((*it)->get_name() == name) return (*it);
     return NULL;
+}
+
+void Server::send_lists()
+{
+    for (auto it = clients.begin();it != clients.end();it++)
+	if (*it) handle_msg(Message("",Message::LIST_ALL),**it);
 }
 
 void Server::handle_msg(const Message &msg, const Connection &client)

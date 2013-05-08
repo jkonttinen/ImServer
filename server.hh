@@ -26,6 +26,7 @@ private:
     void read_commands();
     void check_connections();
     Connection* get_client(const std::string&);
+    void send_lists();
 
     std::list<Connection*> clients;
     std::map<std::string, Chat*> chats;

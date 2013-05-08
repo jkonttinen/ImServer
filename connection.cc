@@ -27,6 +27,7 @@ Connection::~Connection()
         pthread_cancel(send_thread);
         pthread_join(send_thread,NULL);
     }
+//    shutdown(connfd,SHUT_RDWR);
     close(connfd);
 }
 

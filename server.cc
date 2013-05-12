@@ -83,9 +83,9 @@ void Server::poll_clients()
         pthread_mutex_lock( &client_mutex );
         clients.push_back(new Connection(connfd, *this));
         if (clients.back()->get_state() == Connection::DISCONNECTED)
-            clients.back()->send_to(Message("Duplicate name",Message::EXIT));
+            clients.back()->send_to(Message(Message::EXIT,clients.back()->get_name(),"Duplicate name"));
         else {
-            clients.back()->send_to(Message("Terve!",Message::NONE));
+            clients.back()->send_to(Message(Message::NONE,clients.back()->get_name(),"Terve!"));
             pthread_mutex_unlock(&client_mutex);
             send_lists();
             pthread_mutex_lock(&client_mutex);
@@ -156,7 +156,7 @@ Connection* Server::get_client(const std::string& name)
 void Server::send_lists()
 {
     for (auto it = clients.begin();it != clients.end();it++)
-	if (*it) handle_msg(Message("",Message::LIST_ALL),**it);
+	if (*it) handle_msg(Message(Message::LIST_ALL,(*it)->get_name()),**it);
 }
 
 void Server::handle_msg(const Message &msg, const Connection &client)
@@ -169,9 +169,9 @@ void Server::handle_msg(const Message &msg, const Connection &client)
     {
         for (auto it = clients.begin(); it != clients.end(); it++)
         {
-            if ((*it)->get_name() == msg.get_info())
+            if ((*it)->get_name() == msg.get_name())
             {
-                (*it)->send_to(Message(msg.get_content(false),msg.get_type(),client.get_name()));
+                (*it)->send_to(Message(msg.get_type(),client.get_name(),msg.get_content(false)));
                 break;
             }
         }
@@ -180,18 +180,17 @@ void Server::handle_msg(const Message &msg, const Connection &client)
 
     case Message::CHAT_MESSAGE:
     {
-        if (chats.find(msg.get_info()) == chats.end()) break;
-        if (!chats[msg.get_info()]->has_client(client.get_name())) break;
-        chats[msg.get_info()]->send_all(msg,client);
+        if (chats.find(msg.get_name()) == chats.end()) break;
+        if (!chats[msg.get_name()]->has_client(client.get_name())) break;
+        chats[msg.get_name()]->send_all(msg);
         break;
     }
     case Message::INVITE:
     {
-        if (msg.get_info() == client.get_name()) break;
+        if (msg.get_name() == client.get_name()) break;
 
-        std::stringstream chat_name, invite;
+        std::stringstream chat_name;
         Connection* cptr = NULL;
-        invite << client.get_name() <<" invited you to a chat.";
 
         if (msg.get_content(false) == std::string("new"))
         {
@@ -203,47 +202,46 @@ void Server::handle_msg(const Message &msg, const Connection &client)
             if (cptr == NULL) break;
             chats[chat_name.str()] = new Chat(cptr, chat_name.str());
 
-            cptr = get_client(msg.get_info());
+            cptr = get_client(msg.get_name());
             if (cptr == NULL) break;
             chats[chat_name.str()]->add_client(cptr);
 
-            cptr->send_to(Message(invite.str(), Message::INVITE, chat_name.str()));
-            client.send_to(Message("You initiated a chat.", Message::INVITE, chat_name.str()));
+            cptr->send_to(Message(Message::INVITE, msg.get_name(), "invited you to a chat.",  chat_name.str()));
+            client.send_to(Message(Message::INVITE, msg.get_name(), "You initiated a chat.", chat_name.str()));
         }
         else
         {
-            chat_name << msg.get_content(false);
+            chat_name << msg.get_chat();
             if (chats.find(chat_name.str()) == chats.end()) break;
-
-            cptr = get_client(msg.get_info());
+            if (chats.find(chat_name.str())->second->has_client(msg.get_name())) break;
+            cptr = get_client(msg.get_name());
             if (cptr == NULL) break;
             chats[chat_name.str()]->add_client(cptr);
-            cptr->send_to(Message(invite.str(), Message::INVITE, chat_name.str()));
+            cptr->send_to(Message(Message::INVITE, msg.get_name(), "invited you to a chat.", chat_name.str()));
 
-            invite.str(std::string());
-            invite << "Invited " << msg.get_info() <<" to the chat.";
-            client.send_to(Message(invite.str(),Message::INVITE, chat_name.str()));
+            std::string invite("Invited " + msg.get_name() + " to the chat.");
+            client.send_to(Message(Message::INVITE, msg.get_name(), invite, chat_name.str()));
         }
         break;
     }
     case Message::PART_CHAT:
     {
         std::stringstream chat_name,ss;
-        chat_name << msg.get_content(false);
+        chat_name << msg.get_chat();
         if (chats.find(chat_name.str()) == chats.end()) break;
 
         //chats[chat_name.str()]->send_all(Message("quit the chat.",msg.get_type(),""),client);
         chats[chat_name.str()]->remove_client(client.get_name());
 
-        client.send_to(Message("You quit the chat.",msg.get_type(),""));
+        client.send_to(Message(msg.get_type(),msg.get_name(), "You quit the chat."));
         break;
     }
     case Message::LIST_CHAT:
     {
         std::string help("");
-        if (chats.find(msg.get_content(false)) == chats.end()) break;
-        help = chats[msg.get_content(false)]->get_namelist();
-        client.send_to(Message(help, msg.get_type()));
+        if (chats.find(msg.get_chat()) == chats.end()) break;
+        help = chats[msg.get_chat()]->get_namelist();
+        client.send_to(Message(msg.get_type(), msg.get_name(),help,msg.get_chat()));
         break;
     }
     case Message::LIST_ALL:
@@ -256,7 +254,7 @@ void Server::handle_msg(const Message &msg, const Connection &client)
         }
 
         if (help.size() > 0) help.erase(help.end()-1);
-        client.send_to(Message(help, msg.get_type(),""));
+        client.send_to(Message(msg.get_type(),msg.get_name(),help));
         break;
     }
     default: break;

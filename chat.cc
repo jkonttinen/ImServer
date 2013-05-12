@@ -14,14 +14,11 @@ Chat::~Chat()
     clients.clear();
 }
 
-void Chat::send_all(const Message& msg, const Connection& sender) const
+void Chat::send_all(const Message& msg) const
 {
-    std::stringstream ss;
-    ss << sender.get_name() <<" "<<msg.get_content(false);
-
     for (auto it = clients.begin(); it != clients.end(); it++)
-        if (sender.get_name() != (*it)->get_name())
-            (*it)->send_to(Message(ss.str(),msg.get_type(),msg.get_info()));
+        if (msg.get_name() != (*it)->get_name())
+            (*it)->send_to(Message(msg.get_type(),msg.get_name(),msg.get_content(false),msg.get_chat()));
 }
 
 void Chat::add_client(Connection* client)
@@ -34,7 +31,7 @@ void Chat::remove_client(const std::string& name)
     for (auto it = clients.begin();it != clients.end();it++)
         if ((*it)->get_name() == name)
         {
-            send_all(Message("quit the chat.",Message::PART_CHAT),**it);
+            send_all(Message(Message::PART_CHAT,name,"quit the chat.",get_name()));
             clients.erase(it);
             break;
         }

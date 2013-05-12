@@ -5,18 +5,24 @@ Message::Message(const std::string& msg):content(msg)
     size_t num;
     content >> num;
     type = (Message::MsgType)num;
-    if (type != NONE && type < LIST_ALL)
-        content >> info;
-    content.ignore();
-    std::getline(content, message);
+    std::string help;
+    if (type != NONE && type < LIST_ALL){
+        do {
+            content >> name;
+        }while(help != "|");
+    }
+    do{
+        content >> message;
+    }while(help != "|");
+    content >> chat;
 }
 
-Message::Message(const std::string& msg, const Message::MsgType& type,
-            const std::string& info): type(type),message(msg),info(info)
+Message::Message(const Message::MsgType& type, const std::string& name,
+    const std::string& msg, const std::string& chat): name(name),message(msg),chat(chat)
 {
-    if (info != "")
-        content << type <<" "<< info <<" "<< msg;
-    else content << type <<" "<< msg;
+    if (chat != "")
+        content << name <<" | "<< msg <<" | "<< chat;
+    else content << name <<" | "<< msg;
 }
 
 std::string Message::get_content(bool all)const
@@ -30,9 +36,14 @@ Message::MsgType Message::get_type()const
     return type;
 }
 
-std::string Message::get_info()const
+std::string Message::get_name()const
 {
-    return info;
+    return name;
+}
+
+std::string Message::get_chat()const
+{
+    return chat;
 }
 
 std::ostream& operator<< (std::ostream& out, const Message& msg)

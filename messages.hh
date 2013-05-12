@@ -1,14 +1,13 @@
-#ifndef MESSAGE_HH
-#define MESSAGE_HH
+#ifndef MESSAGES_HH
+#define MESSAGES_HH
 
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 class Message
 {
 public:
-    enum MsgType
-    {
+    enum MsgType {
         NONE,
         MESSAGE,
         CHAT_MESSAGE,
@@ -20,18 +19,21 @@ public:
         EXIT
     };
     Message(const std::string&);
-    Message(const std::string&, const MsgType&, const std::string& info = "");
+    Message(const MsgType&, const std::string&, const std::string& msg="", const std::string& chat="");
 
     std::string get_content(bool)const;
     MsgType get_type()const;
-    std::string get_info()const;
+    std::string get_name()const;
+    std::string get_chat()const;
 private:
     MsgType type;
 
     std::stringstream content;
+    std::string name;
     std::string message;
-    std::string info;
+    std::string chat;
 };
 
 std::ostream& operator<<(std::ostream &, const Message&);
-#endif //MESSAGE_HH 
+#endif // MESSAGES_HH
+

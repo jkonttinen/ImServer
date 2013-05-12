@@ -156,7 +156,7 @@ Connection* Server::get_client(const std::string& name)
 void Server::send_lists()
 {
     for (auto it = clients.begin();it != clients.end();it++)
-	if (*it) handle_msg(Message(Message::LIST_ALL,(*it)->get_name()),**it);
+        if (*it) handle_msg(Message(Message::LIST_ALL,(*it)->get_name()),**it);
 }
 
 void Server::handle_msg(const Message &msg, const Connection &client)
@@ -180,9 +180,9 @@ void Server::handle_msg(const Message &msg, const Connection &client)
 
     case Message::CHAT_MESSAGE:
     {
-        if (chats.find(msg.get_name()) == chats.end()) break;
-        if (!chats[msg.get_name()]->has_client(client.get_name())) break;
-        chats[msg.get_name()]->send_all(msg);
+        if (chats.find(msg.get_chat()) == chats.end()) break;
+        if (!chats[msg.get_chat()]->has_client(client.get_name())) break;
+        chats[msg.get_chat()]->send_all(msg);
         break;
     }
     case Message::INVITE:

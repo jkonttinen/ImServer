@@ -2,27 +2,28 @@
 
 Message::Message(const std::string& msg):content(msg)
 {
-    size_t num;
+    size_t num,c=0;
+    std::string help;
     content >> num;
     type = (Message::MsgType)num;
-    std::string help;
-    if (type != NONE && type < LIST_ALL){
-        do {
-            content >> name;
-        }while(help != "|");
+    for (size_t i = 2; i < msg.size(); i++){
+        if (msg[i] != '|') help += msg[i];
+        else {
+            c++;
+            if (c == 1) name = help;
+            else if (c == 2) message = help;
+            else chat = help;
+            help = std::string("");
+        }
     }
-    do{
-        content >> message;
-    }while(help != "|");
-    content >> chat;
 }
 
 Message::Message(const Message::MsgType& type, const std::string& name,
-    const std::string& msg, const std::string& chat): name(name),message(msg),chat(chat)
+    const std::string& msg, const std::string& chat): type(type),name(name),message(msg),chat(chat)
 {
     if (chat != "")
-        content << name <<" | "<< msg <<" | "<< chat;
-    else content << name <<" | "<< msg;
+        content << type << "|" << name <<"|"<< msg <<"|"<< chat << "|";
+    else content << type << "|" << name <<"|"<< msg << "|";
 }
 
 std::string Message::get_content(bool all)const

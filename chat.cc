@@ -46,9 +46,8 @@ std::string Chat::get_namelist()const
 {
     std::string str("");
     for (auto it = clients.begin();it != clients.end();it++)
-        str += (*it)->get_name() + " ";
+        str += (*it)->get_name() + "~";
 
-    if (str.size() > 0) str.erase(str.end()-1);
     return str;
 }
 

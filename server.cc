@@ -181,6 +181,7 @@ void Server::handle_msg(const Message &msg, const Connection &client)
     case Message::CHAT_MESSAGE:
     {
         if (chats.find(msg.get_chat()) == chats.end()) break;
+        if (msg.get_name() != client.get_name()) break;
         if (!chats[msg.get_chat()]->has_client(client.get_name())) break;
         chats[msg.get_chat()]->send_all(msg);
         break;
@@ -206,8 +207,8 @@ void Server::handle_msg(const Message &msg, const Connection &client)
             if (cptr == NULL) break;
             chats[chat_name.str()]->add_client(cptr);
 
-            cptr->send_to(Message(Message::INVITE, msg.get_name(), "invited you to a chat.",  chat_name.str()));
-            client.send_to(Message(Message::INVITE, msg.get_name(), "You initiated a chat.", chat_name.str()));
+            cptr->send_to(Message(Message::INVITE, client.get_name(), "invited you to a chat.",  chat_name.str()));
+            client.send_to(Message(Message::INVITE, client.get_name(), "You initiated a chat.", chat_name.str()));
         }
         else
         {
@@ -217,10 +218,10 @@ void Server::handle_msg(const Message &msg, const Connection &client)
             cptr = get_client(msg.get_name());
             if (cptr == NULL) break;
             chats[chat_name.str()]->add_client(cptr);
-            cptr->send_to(Message(Message::INVITE, msg.get_name(), "invited you to a chat.", chat_name.str()));
+            cptr->send_to(Message(Message::INVITE, client.get_name(), "invited you to a chat.", chat_name.str()));
 
             std::string invite("Invited " + msg.get_name() + " to the chat.");
-            client.send_to(Message(Message::INVITE, msg.get_name(), invite, chat_name.str()));
+            client.send_to(Message(Message::INVITE, client.get_name(), invite, chat_name.str()));
         }
         break;
     }
@@ -250,10 +251,9 @@ void Server::handle_msg(const Message &msg, const Connection &client)
         for (auto it = clients.begin(); it != clients.end(); it++)
         {
             if (client.get_name() != (*it)->get_name())
-                help += (*it)->get_name() +" ";
+                help += (*it)->get_name() +"~";
         }
 
-        if (help.size() > 0) help.erase(help.end()-1);
         client.send_to(Message(msg.get_type(),msg.get_name(),help));
         break;
     }

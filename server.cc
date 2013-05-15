@@ -208,7 +208,7 @@ void Server::handle_msg(const Message &msg, const Connection &client)
             chats[chat_name.str()]->add_client(cptr);
 
             cptr->send_to(Message(Message::INVITE, client.get_name(), "invited you to a chat.",  chat_name.str()));
-            client.send_to(Message(Message::INVITE, client.get_name(), "You initiated a chat.", chat_name.str()));
+            client.send_to(Message(Message::INVITE, client.get_name(), "Sent invitation.", chat_name.str()));
         }
         else
         {
@@ -219,9 +219,7 @@ void Server::handle_msg(const Message &msg, const Connection &client)
             if (cptr == NULL) break;
             chats[chat_name.str()]->add_client(cptr);
             cptr->send_to(Message(Message::INVITE, client.get_name(), "invited you to a chat.", chat_name.str()));
-
-            std::string invite("Invited " + msg.get_name() + " to the chat.");
-            client.send_to(Message(Message::INVITE, client.get_name(), invite, chat_name.str()));
+            client.send_to(Message(Message::INVITE, client.get_name(),"Sent invitation.", chat_name.str()));
         }
         break;
     }

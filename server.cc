@@ -4,8 +4,6 @@
 #include <pthread.h>
 #include <cstring>
 
-#define BITS sizeof(size_t)
-
 int main(void)
 {
     Server s;
@@ -163,6 +161,7 @@ void Server::handle_msg(const Message &msg, const Connection &client)
 {
     pthread_mutex_lock(&client_mutex);
     pthread_mutex_lock(&chat_mutex);
+    if (!(&client)) return;
     switch (msg.get_type())
     {
     case Message::MESSAGE:

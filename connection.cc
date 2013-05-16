@@ -57,7 +57,7 @@ void Connection::receive()
         delete [] buf;
         usleep(5);
     }
-
+    
     std::cout <<name<<" disconnected."<<std::endl;
     set_state(DISCONNECTED);
 }
@@ -68,15 +68,19 @@ void Connection::send_to(const Message& msg)const
     std::stringstream ostr;
     char help[32] = "";
     ostr << msg.get_content(true);
-#if BITS>4
-    sprintf(help,"%lu", ostr.str().size());
-#else
+
     sprintf(help,"%u", ostr.str().size());
-#endif
-    rv = send(connfd, help, 32,0);
-    if (rv < 1) std::cout << "Error while trying to send" <<std::endl;
-    rv = send(connfd, ostr.str().c_str(), ostr.str().size(), 0);
-    if (rv < 1) std::cout << "Error while trying to send" <<std::endl;
+
+    rv = send(connfd, help, 32,MSG_NOSIGNAL);
+    if (rv < 1){
+        std::cout << "Error while trying to send" <<std::endl;
+        return;
+    }
+    rv = send(connfd, ostr.str().c_str(), ostr.str().size(), MSG_NOSIGNAL);
+    if (rv < 1){
+        std::cout << "Error while trying to send" <<std::endl;
+        return;
+    }
 }
 
 void Connection::start()

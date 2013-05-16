@@ -22,6 +22,7 @@ public:
     void send_all(const Message&) const;
 
     bool has_client(const std::string&)const;
+    bool empty()const;
 
     std::string get_name()const;
     std::string get_namelist()const;

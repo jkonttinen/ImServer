@@ -4,8 +4,6 @@
 #include <pthread.h>
 #include <cstring>
 
-#define BITS sizeof(size_t)
-
 int main(void)
 {
     Server s;
@@ -131,8 +129,14 @@ void Server::check_connections()
         if ((*it)->get_state() == Connection::DISCONNECTED)
         {
             usleep(1000000);
-            for (auto it1 = chats.begin();it1 != chats.end();it1++)
-                (*it1).second->remove_client((*it)->get_name());
+            for (auto it1 = chats.begin();it1 != chats.end();){
+                it1->second->remove_client((*it)->get_name());
+                if (it1->second->empty()) {
+                   delete (it1->second);
+                   it1 = chats.erase(it1); 
+                }
+                else it1++;
+            }
 
             delete(*it);
             *it = NULL;
@@ -163,6 +167,7 @@ void Server::handle_msg(const Message &msg, const Connection &client)
 {
     pthread_mutex_lock(&client_mutex);
     pthread_mutex_lock(&chat_mutex);
+
     switch (msg.get_type())
     {
     case Message::MESSAGE:

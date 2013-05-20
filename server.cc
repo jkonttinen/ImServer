@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 #include <cstring>
+#include <ctime>
 
 int main(void)
 {
@@ -129,8 +130,14 @@ void Server::check_connections()
         if ((*it)->get_state() == Connection::DISCONNECTED)
         {
             usleep(1000000);
-            for (auto it1 = chats.begin();it1 != chats.end();it1++)
-                (*it1).second->remove_client((*it)->get_name());
+            for (auto it1 = chats.begin();it1 != chats.end();){
+                it1->second->remove_client((*it)->get_name());
+                if (it1->second->empty()) {
+                   delete (it1->second);
+                   it1 = chats.erase(it1);
+                }
+                else it1++;
+            }
 
             delete(*it);
             *it = NULL;
@@ -161,7 +168,7 @@ void Server::handle_msg(const Message &msg, const Connection &client)
 {
     pthread_mutex_lock(&client_mutex);
     pthread_mutex_lock(&chat_mutex);
-    if (!(&client)) return;
+
     switch (msg.get_type())
     {
     case Message::MESSAGE:
@@ -277,12 +284,20 @@ void Server::run()
     if ((res = pthread_create(&cmd_thread,NULL,start_thread<Server,&Server::read_commands>,this)))
         std::cout <<"Thread creation failed: "<<res<<std::endl;
     //printf("Thread creation failed: %d\n", res);
+    clock_t tStart, tEnd;
+    tStart = clock();
 
     while(!done)
     {
+        tEnd = clock();
+
+        if (tEnd - tStart >= 3000000) {
+            send_lists();
+            tStart = clock();
+        }
         check_connections();
         //check_messages();
-        usleep(5);
+        usleep(5000);
     }
 }
 

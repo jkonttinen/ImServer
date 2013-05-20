@@ -72,9 +72,15 @@ void Connection::send_to(const Message& msg)const
     sprintf(help,"%lu", ostr.str().size());
 
     rv = send(connfd, help, 32,MSG_NOSIGNAL);
-    if (rv < 1) std::cout << "Error while trying to send" <<std::endl;
+    if (rv < 1){
+        std::cout << "Error while trying to send" <<std::endl;
+        return;
+    }
     rv = send(connfd, ostr.str().c_str(), ostr.str().size(), MSG_NOSIGNAL);
-    if (rv < 1) std::cout << "Error while trying to send" <<std::endl;
+    if (rv < 1){
+        std::cout << "Error while trying to send" <<std::endl;
+        return;
+    }
 }
 
 void Connection::start()

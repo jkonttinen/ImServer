@@ -57,3 +57,8 @@ bool Chat::has_client(const std::string& name)const
         if ((*it)->get_name() == name) return true;
     return false;
 }
+
+bool Chat::empty()const
+{
+    return clients.empty();
+}

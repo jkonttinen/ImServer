@@ -284,16 +284,16 @@ void Server::run()
     if ((res = pthread_create(&cmd_thread,NULL,start_thread<Server,&Server::read_commands>,this)))
         std::cout <<"Thread creation failed: "<<res<<std::endl;
     //printf("Thread creation failed: %d\n", res);
-    clock_t tStart, tEnd;
-    tStart = clock();
+    time_t tStart, tEnd;
+    time(&tStart);
 
     while(!done)
     {
-        tEnd = clock();
+        time(&tEnd);
 
-        if (tEnd - tStart >= 3000000) {
+        if (difftime(tEnd,tStart) >= 240) {
             send_lists();
-            tStart = clock();
+            time(&tStart);
         }
         check_connections();
         //check_messages();
